@@ -1,31 +1,54 @@
+import os 
 import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
+import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn import datasets
+from sklearn.datasets import load_iris
 
-iris=datasets.load_iris() #gives an array of sepal length ,sepal width, petal length ,petal width
-X = iris.data[:, :4]
-y = iris.target       # setosa =0(50 samples), virginica=1(50 samples) ,versicolor=2(50 samples) [total_length=150]
-Y=iris.target_names
-##print(Y)
 
-x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5 #the + and - 0.5 is given for the purpose of graph
-y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5 #the + and - 0.5 is given for the purpose of graph
 
-#Data Visualization
-plt.figure()
-plt.subplots(1,1,figsize=(10,8))
-plt.xlabel("sepal length")
-plt.ylabel("sepal width")
-plt.scatter(X[:49, 0], X[:49, 1],color="r",label="setosa")
-plt.scatter(X[49:99, 0], X[49:99, 1],color="b",label="virginica")
-plt.scatter(X[100:149, 0], X[100:149, 1],color="g",label="versicolor")
-plt.legend()
-plt.subplots(1,1,figsize=(10,8))
-plt.xlabel("petal length")
-plt.ylabel("petal width")
-plt.scatter(X[:49, 2], X[:49, 3],color="r",label="setosa")
-plt.scatter(X[49:99, 2], X[49:99, 3],color="b",label="virginica")
-plt.scatter(X[100:149, 2], X[100:149, 3],color="g",label="versicolor")
-plt.legend()
+class Perceptron :
+    
+    #Parameters intialization
+    def __init__(self,eta=0.01,n_iter=10,random_state=1):
+        self.eta=eta
+        self.n_iter=n_iter
+        self.random_state=random_state
+        
+    #fiting the parameters 
+    def fit(self,X,y):
+        rgen=np.random.RandomState(self.random_state)
+        self.w=rgen.normal(loc=0.0,scale=0.01,size=1+X.shape[1]) #Random Weight generation 
+        self.errors=[]
+        for _ in range (self.n_iter):
+            errors=0
+            for xi,target in zip(X,y):
+                update=self.eta*(target-self.predict(xi))
+                self.w[1:]+=update*xi
+                self.w[0]+=update
+                errors+=int(update!=0.0)
+            self.errors.append(errors)
+        return self
+    
+    
+    def net_input(self,X):
+        return np.dot(X,self.w[1:])+self.w[0]
+    
+    #prediction 
+    def predict(self,X):
+        return np.where(self.net_input(X)>=0.0,1,-1)
+
+s=os.path.join('https://archive.ics.uci.edu/','ml/', 'machine-learning-databases/', 'iris/', 'iris.data')
+data=pd.read_csv(s,header=None,encoding='utf-8')
+
+#target
+y=data.iloc[0:100,4].values
+y=np.where(y=='Iris-setosa',-1,1)
+
+#features
+X=data.iloc[0:100,[0,2]].values
+
+#visualization
+plt.scatter(X[:50,0],X[:50,1],color='red',marker='o',label='setosa')
+plt.scatter(X[50:100,0],X[50:100,1],color='blue',marker='x',label='versicolor')
+perceptron=Perceptron(eta=0.1,n_iter=10)
+perceptron.fit(X,y)
