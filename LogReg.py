@@ -3,9 +3,32 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
+from matplotlib .colors import ListedColormap
 
-
-
+def plot_decision_regions(X, y, classifier, resolution=0.02):
+    markers=('o', 'x')
+    colors=('red', 'gray')
+    cmap=ListedColormap(colors[:len(np.unique(y))])
+    
+    x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5 
+    y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5 
+    XX1, YY1=np.meshgrid(np.arange(x_min, x_max, resolution),
+                        np.arange(y_min, y_max, resolution))
+    
+    Z=classifier.predict(np.array([XX1.ravel(),YY1.ravel()]).T)
+    print(Z.shape)
+    Z=Z.reshape(XX1.shape)
+    print(XX1.shape)
+    print(YY1.shape)
+    print(Z.shape)
+    
+    plt.figure(figsize=(10,10))
+    plt.contourf(XX1, YY1, Z, alpha=0.3, cmap=cmap)
+    plt.xlim(XX1.min(), XX1.max())
+    plt.ylim(YY1.min(), YY1.max())
+    
+    for idx, cl in enumerate(np.unique(y)):
+        plt.scatter(x=X[y==cl,0], y=X[y==cl,1], alpha=0.8,c= colors[idx], marker=markers[idx], label=cl, edgecolor='black' )
 class Perceptron :
     
     #Parameters intialization
@@ -48,7 +71,19 @@ y=np.where(y=='Iris-setosa',-1,1)
 X=data.iloc[0:100,[0,2]].values
 
 #visualization
+plt.figure(figsize=(7,7))
 plt.scatter(X[:50,0],X[:50,1],color='red',marker='o',label='setosa')
 plt.scatter(X[50:100,0],X[50:100,1],color='blue',marker='x',label='versicolor')
+plt.xlabel('sepal length [cm]')
+plt.ylabel('petal lenght [cm]')
+plt.legend(loc='upper left')
+plt.show()
+
+#Classifier
 perceptron=Perceptron(eta=0.1,n_iter=10)
 perceptron.fit(X,y)
+plt.figure(figsize=(9,7))
+plt.plot(range(1,len(perceptron.errors)+1),perceptron.errors,marker='o')
+plt.show()
+
+plot_decision_regions(X,y,classifier=perceptron)
